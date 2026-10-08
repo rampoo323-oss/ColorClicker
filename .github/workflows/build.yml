@@ -8,7 +8,9 @@ jobs:
       - name: Arrange project
         run: |
           B=app/src/main
-          mkdir -p $B/java/com/example/colorclicker $B/res/xml
+          mkdir -p $B/java/com/example/colorclicker $B/res/xml $B/res/values
+          echo '<resources><string name="svc_desc">Tap service for Color Clicker</string></resources>' > $B/res/values/strings.xml
+          sed -i 's|android:description="[^"]*"|android:description="@string/svc_desc"|' accessibility_config.xml
           sed -i 's/catch (_: Exception)/catch (e: Exception)/g' OverlayService.kt
           mv AndroidManifest.xml $B/
           mv *.kt $B/java/com/example/colorclicker/
@@ -30,7 +32,6 @@ jobs:
             echo '### Build errors'
             echo '```'
             grep -E -A6 "^e: |What went wrong" build.log | head -40
-            grep -m 8 -E "Exception|Caused by" build.log
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
           tail -n 40 build.log
