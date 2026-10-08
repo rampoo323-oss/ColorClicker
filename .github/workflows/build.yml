@@ -9,6 +9,7 @@ jobs:
         run: |
           B=app/src/main
           mkdir -p $B/java/com/example/colorclicker $B/res/xml
+          sed -i 's/catch (_: Exception)/catch (e: Exception)/g' OverlayService.kt
           mv AndroidManifest.xml $B/
           mv *.kt $B/java/com/example/colorclicker/
           mv accessibility_config.xml $B/res/xml/
@@ -20,7 +21,20 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: "8.7"
-      - run: gradle assembleDebug --no-daemon
+      - name: Build
+        run: |
+          set +e
+          gradle assembleDebug --no-daemon --console=plain > build.log 2>&1
+          code=$?
+          {
+            echo '### Build errors'
+            echo '```'
+            grep -E -A6 "^e: |What went wrong" build.log | head -40
+            grep -m 8 -E "Exception|Caused by" build.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          tail -n 40 build.log
+          exit $code
       - uses: actions/upload-artifact@v4
         with:
           name: ColorClicker-apk
